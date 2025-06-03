@@ -1,0 +1,52 @@
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+*.so
+
+# Distribution / packaging
+*.egg-info/
+*.egg
+
+# Logs and temp
+*.log
+*.tmp
+*.bak
+
+# Virtual environments
+venv/
+env/
+ENV/
+.venv/
+.Python
+
+# Environment variables
+.env
+
+# Django
+*.sqlite3
+db.sqlite3
+local_settings.py
+media/
+staticfiles/
+
+# Celery
+celerybeat-schedule
+celerybeat.pid
+
+# Editor settings
+.vscode/
+.idea/
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Migrations cache
+**/migrations/__pycache__/
+**/migrations/*.pyc
+**/migrations/*.pyo
+# created by virtualenv automatically
+.venv/Lib
+
