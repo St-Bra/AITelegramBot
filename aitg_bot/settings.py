@@ -47,7 +47,8 @@ INSTALLED_APPS = [
     'bot',
     'core',
     'forecast',
-    'news'
+    'news',
+    'django_celery_beat',
 ]
 
 MIDDLEWARE = [
@@ -136,3 +137,9 @@ STATIC_URL = 'static/'
 # https://docs.djangoproject.com/en/5.2/ref/settings/#default-auto-field
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
+
+NEWS_API_KEY = env('NEWS_API_KEY')
+
+CELERY_BROKER_URL = 'redis://localhost:6379/0'
+CELERY_ACCEPT_CONTENT = ['json']
+CELERY_TASK_SERIALIZER = 'json'
