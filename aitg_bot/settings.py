@@ -139,6 +139,7 @@ STATIC_URL = 'static/'
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 NEWS_API_KEY = env('NEWS_API_KEY')
+OPENAI_API_KEY = env('OPENAI_API_KEY')
 
 CELERY_BROKER_URL = 'redis://localhost:6379/0'
 CELERY_ACCEPT_CONTENT = ['json']
