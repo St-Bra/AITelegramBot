@@ -1,81 +1,100 @@
-import os
 import requests
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, date
+from core.models import HistoricalRate, Currency
 from django.conf import settings
-from core.models import HistoricalRate
 
-API_KEY = os.environ.get('EXCHANGE_API_KEY')
-BASE_URL = 'https://api.apilayer.com/exchangerates_data'
-
-HEADERS = {
-    "apikey": API_KEY
-}
-
+BASE_URL = "https://api.apilayer.com/exchangerates_data"
 BASE_CURRENCY = "EUR"
 SYMBOLS = ["USD", "BTC"]
+HEADERS = {
+    "apikey": settings.EXCHANGE_API_KEY
+}
 
-
-def fetch_and_save_latest_rates():
-    """Fetches and saves the latest exchange rates (used by Celery every hour)."""
-    url = f"{BASE_URL}/latest"
+def fetch_and_save_latest_rates(base_currency='EUR', symbols=['USD', 'BTC']):
+    url = "https://api.exchangeratesapi.io/v1/latest"
     params = {
-        "base": BASE_CURRENCY,
-        "symbols": ",".join(SYMBOLS),
+        "access_key": settings.EXCHANGE_API_KEY,
+        "base": base_currency,
+        "symbols": ','.join(symbols)
     }
 
-    print(f"Requesting latest rates for base={BASE_CURRENCY}, symbols={SYMBOLS}...")
-    response = requests.get(url, headers=HEADERS, params=params)
+    print(f"Requesting rates for base={base_currency} symbols={symbols}")
+    response = requests.get(url, params=params)
     data = response.json()
-    print("Received response:", data)
-
-    if not data.get("success"):
-        print("Error:", data.get("error"))
-        return
-
-    date_str = data["date"]
-    date_obj = datetime.strptime(date_str, "%Y-%m-%d").date()
-
-    for target_currency, rate in data["rates"].items():
-        HistoricalRate.objects.update_or_create(
-            date=date_obj,
-            base_currency=BASE_CURRENCY,
-            target_currency=target_currency,
-            defaults={"rate": rate}
-        )
-        print(f"Saved rate: {target_currency} = {rate} on {date_str}")
-
-
-def fetch_and_save_historical_rates(days_back=60):
-    """Fetches and saves historical exchange rates for the last `days_back` days."""
-    end_date = datetime.today().date()
-    start_date = end_date - timedelta(days=days_back)
-
-    url = f"{BASE_URL}/timeseries"
-    params = {
-        "start_date": start_date.isoformat(),
-        "end_date": end_date.isoformat(),
-        "base": BASE_CURRENCY,
-        "symbols": ",".join(SYMBOLS),
-    }
-
-    print(f"Requesting historical rates from {start_date} to {end_date}...")
-
-    response = requests.get(url, headers=HEADERS, params=params)
-    data = response.json()
-    print("Received response:", data)
-
-    if not data.get("success"):
-        print("Error:", data.get("error"))
-        return
+    print(f"Received response: {data}")
 
     rates = data.get("rates", {})
-    for date_str, rate_dict in rates.items():
-        date_obj = datetime.strptime(date_str, "%Y-%m-%d").date()
-        for target_currency, rate in rate_dict.items():
-            HistoricalRate.objects.update_or_create(
-                date=date_obj,
-                base_currency=BASE_CURRENCY,
-                target_currency=target_currency,
-                defaults={"rate": rate}
-            )
-            print(f"Saved rate: {target_currency} = {rate} on {date_str}")
+
+    if not rates:
+        print("No rates found in response.")
+        return
+
+    for code, rate in rates.items():
+        currency, _ = Currency.objects.get_or_create(code=code)
+        HistoricalRate.objects.update_or_create(
+            currency=currency,
+            date=date.today(),
+            defaults={'rate': rate}
+        )
+        print(f"Saved rate: {code} = {rate} on {date.today()}")
+
+"""
+def fetch_and_save_historical_rates(days=30, base_currency='EUR', symbols=['USD']):
+    for i in range(days):
+        day = date.today() - timedelta(days=i+1)
+        day_str = day.isoformat()
+        url = f"https://api.frankfurter.app/{day_str}"
+        params = {
+            "from": base_currency,
+            "to": ','.join(symbols)
+        }
+        response = requests.get(url, params=params)
+        if response.status_code == 200:
+            data = response.json()
+            rates = data.get("rates", {})
+            if rates:
+                for code, rate in rates.items():
+                    currency, _ = Currency.objects.get_or_create(code=code)
+                    HistoricalRate.objects.update_or_create(
+                        currency=currency,
+                        date=day,
+                        defaults={"rate": rate}
+                    )
+                print(f"Saved rates for {day_str}: {rates}")
+            else:
+                print(f"No rates data for {day_str}")
+        else:
+            print(f"Failed to fetch data for {day_str}, status code {response.status_code}")
+
+def fetch_btc_to_eur_rate():
+    url = "https://api.coingecko.com/api/v3/simple/price"
+    params = {
+        "ids": "bitcoin",
+        "vs_currencies": "eur"
+    }
+
+    try:
+        response = requests.get(url, params=params)
+        response.raise_for_status()
+        data = response.json()
+        btc_to_eur = data['bitcoin']['eur']
+
+        # Получаем Currency с кодом BTC
+        btc_currency = Currency.objects.get(code='BTC')
+
+        # Сохраняем в HistoricalRate
+        HistoricalRate.objects.update_or_create(
+            currency=btc_currency,
+            date=date.today(),
+            defaults={
+                "rate": btc_to_eur
+            }
+        )
+
+        print(f"Saved BTC to EUR rate: {btc_to_eur}")
+    except Currency.DoesNotExist:
+        print("Currency with code 'BTC' not found. Please create it in admin or fixtures.")
+    except Exception as e:
+        print(f"Error fetching BTC to EUR rate: {e}")
+
+"""
