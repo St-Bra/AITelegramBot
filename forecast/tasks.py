@@ -10,11 +10,10 @@ def analyze_news_with_vader():
     unprocessed_news = NewsArticle.objects.filter(sentiment_score__isnull=True)[:20]
 
     for article in unprocessed_news:
-        # Объединяем заголовок и текст
         text = f"{article.title}\n{article.content}"
         try:
             sentiment = analyzer.polarity_scores(text)
-            score = sentiment["compound"]  # Значение от -1 до 1
+            score = sentiment["compound"]
 
             article.sentiment_score = score
             article.save()

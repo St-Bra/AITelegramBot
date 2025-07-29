@@ -10,7 +10,6 @@ class Migration(migrations.Migration):
     initial = True
 
     dependencies = [
-        ('forecast', '0001_initial'),
     ]
 
     operations = [
