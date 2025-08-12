@@ -38,7 +38,7 @@ def fetch_and_save_latest_rates(base_currency='EUR', symbols=['USD', 'BTC']):
         )
         print(f"Saved rate: {code} = {rate} on {date.today()}")
 
-"""
+
 def fetch_and_save_historical_rates(days=30, base_currency='EUR', symbols=['USD']):
     for i in range(days):
         day = date.today() - timedelta(days=i+1)
@@ -66,35 +66,3 @@ def fetch_and_save_historical_rates(days=30, base_currency='EUR', symbols=['USD'
         else:
             print(f"Failed to fetch data for {day_str}, status code {response.status_code}")
 
-def fetch_btc_to_eur_rate():
-    url = "https://api.coingecko.com/api/v3/simple/price"
-    params = {
-        "ids": "bitcoin",
-        "vs_currencies": "eur"
-    }
-
-    try:
-        response = requests.get(url, params=params)
-        response.raise_for_status()
-        data = response.json()
-        btc_to_eur = data['bitcoin']['eur']
-
-        # Получаем Currency с кодом BTC
-        btc_currency = Currency.objects.get(code='BTC')
-
-        # Сохраняем в HistoricalRate
-        HistoricalRate.objects.update_or_create(
-            currency=btc_currency,
-            date=date.today(),
-            defaults={
-                "rate": btc_to_eur
-            }
-        )
-
-        print(f"Saved BTC to EUR rate: {btc_to_eur}")
-    except Currency.DoesNotExist:
-        print("Currency with code 'BTC' not found. Please create it in admin or fixtures.")
-    except Exception as e:
-        print(f"Error fetching BTC to EUR rate: {e}")
-
-"""
