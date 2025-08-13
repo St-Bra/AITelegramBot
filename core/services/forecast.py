@@ -7,8 +7,8 @@ from forecast.models import Forecast
 
 def get_eur_historical_data():
     """Берём исторические курсы евро из базы, подготавливаем DataFrame для Prophet."""
-    eur = Currency.objects.get(code='EUR')
-    rates = HistoricalRate.objects.filter(currency=eur).order_by('date')
+    usd = Currency.objects.get(code='USD')
+    rates = HistoricalRate.objects.filter(currency=usd).order_by('date')
     data = [(r.date, float(r.rate)) for r in rates]
     df = pd.DataFrame(data, columns=['ds', 'y'])
     return df
