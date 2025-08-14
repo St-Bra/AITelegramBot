@@ -1,7 +1,6 @@
 from telegram import Update
 from telegram.ext import ContextTypes, CallbackContext
 from asgiref.sync import sync_to_async
-
 from bot.models import BotUser
 from core.models import Currency, HistoricalRate
 from datetime import date, timezone
