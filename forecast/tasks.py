@@ -1,4 +1,6 @@
 from celery import shared_task
+
+from forecast.utils import check_forecast_accuracy
 from news.models import NewsArticle
 from vaderSentiment.vaderSentiment import SentimentIntensityAnalyzer
 from core.services.forecast import make_and_save_forecast
@@ -24,3 +26,8 @@ def analyze_news_with_vader():
 @shared_task
 def daily_forecast_task():
     make_and_save_forecast()
+
+@shared_task
+def update_forecast_accuracy_task():
+    check_forecast_accuracy()
+    return "Forecast accuracy updated"

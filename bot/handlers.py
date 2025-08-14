@@ -1,8 +1,10 @@
 from telegram import Update
 from telegram.ext import ContextTypes
 from asgiref.sync import sync_to_async
+
+from bot.models import BotUser
 from core.models import Currency, HistoricalRate
-from datetime import date
+from datetime import date, timezone
 from forecast.models import Forecast
 
 @sync_to_async
@@ -32,6 +34,7 @@ def get_forecasts():
 
 
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    await register_user(update)
     await update.message.reply_text("Привет! Я бот прогноза курсов валют. Что бы увидеть доступные команды используй /help.")
 
 
@@ -66,3 +69,15 @@ async def help_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
         "/help - показать этот список команд"
     )
     await update.message.reply_text(text)
+
+@sync_to_async
+def register_user(update):
+    """Create or update BotUser when /start is received"""
+    tg_user = update.effective_user
+    BotUser.objects.update_or_create(
+        telegram_id=tg_user.id,
+        defaults={
+            'username': tg_user.username,
+            'language_code': tg_user.language_code or 'en'
+        }
+    )
