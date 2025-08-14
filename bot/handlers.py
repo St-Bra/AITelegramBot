@@ -113,7 +113,7 @@ async def unsubscribe_command(update: Update, context: ContextTypes.DEFAULT_TYPE
 def get_last_accuracy_records(days=7):
     return list(
         ForecastAccuracy.objects
-        .select_related('forecast')  # подгружаем связанный forecast сразу
+        .select_related('forecast')
         .order_by('-forecast__forecast_date')[:days]
     )
 
@@ -125,7 +125,6 @@ async def history_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
     text = "📊 История точности прогнозов за последние 7 дней:\n\n"
     for record in records:
-        # Теперь record.forecast уже загружен, дополнительных запросов не будет
         text += f"{record.forecast.forecast_date}: {record.accuracy:.2f}%\n"
 
     await update.message.reply_text(text)
