@@ -1,6 +1,7 @@
 from celery import shared_task
 from news.models import NewsArticle
 from vaderSentiment.vaderSentiment import SentimentIntensityAnalyzer
+from core.services.forecast import make_and_save_forecast
 
 
 @shared_task
@@ -19,3 +20,7 @@ def analyze_news_with_vader():
             article.save()
         except Exception as e:
             print(f"Ошибка анализа новости {article.id}: {e}")
+
+@shared_task
+def daily_forecast_task():
+    make_and_save_forecast()

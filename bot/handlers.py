@@ -32,7 +32,7 @@ def get_forecasts():
 
 
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    await update.message.reply_text("Привет! Я бот прогноза курсов валют.")
+    await update.message.reply_text("Привет! Я бот прогноза курсов валют. Что бы увидеть доступные команды используй /help.")
 
 
 async def eur(update: Update, context: ContextTypes.DEFAULT_TYPE):
@@ -55,4 +55,14 @@ async def forecast(update: Update, context: ContextTypes.DEFAULT_TYPE):
     for f in forecasts:
         text += f"{f.forecast_date}: 1 EUR = {f.predicted_rate:.4f} USD\n"
 
+    await update.message.reply_text(text)
+
+async def help_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    text = (
+        "Доступные команды:\n"
+        "/start - приветствие\n"
+        "/eur - текущий курс евро\n"
+        "/forecast - прогноз курса евро на ближайшие дни\n"
+        "/help - показать этот список команд"
+    )
     await update.message.reply_text(text)
