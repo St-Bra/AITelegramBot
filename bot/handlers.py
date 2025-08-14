@@ -1,11 +1,12 @@
 from telegram import Update
-from telegram.ext import ContextTypes
+from telegram.ext import ContextTypes, CallbackContext
 from asgiref.sync import sync_to_async
 
 from bot.models import BotUser
 from core.models import Currency, HistoricalRate
 from datetime import date, timezone
-from forecast.models import Forecast
+from forecast.models import Forecast, ForecastAccuracy
+
 
 @sync_to_async
 def get_eur_rates():
@@ -66,7 +67,10 @@ async def help_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
         "/start - приветствие\n"
         "/eur - текущий курс евро\n"
         "/forecast - прогноз курса евро на ближайшие дни\n"
-        "/help - показать этот список команд"
+        "/help - показать этот список команд\n"
+        "/subscribe - подписаться на ежедневные прогнозы\n"
+        "/unsubscribe - отписаться от ежедневных прогнозов\n"
+        "/history - история точности прогнозов"
     )
     await update.message.reply_text(text)
 
@@ -81,3 +85,47 @@ def register_user(update):
             'language_code': tg_user.language_code or 'en'
         }
     )
+
+# === Подписка ===
+@sync_to_async
+def set_subscription(telegram_id, subscribe=True):
+    user, _ = BotUser.objects.get_or_create(
+        telegram_id=telegram_id,
+        defaults={
+            "username": "",
+            "language_code": "en"
+        }
+    )
+    user.is_subscribed = subscribe
+    user.save()
+    return user
+
+async def subscribe_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    await set_subscription(update.effective_user.id, True)
+    await update.message.reply_text("✅ Вы подписались на ежедневные прогнозы по EUR!")
+
+async def unsubscribe_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    await set_subscription(update.effective_user.id, False)
+    await update.message.reply_text("❌ Вы отписались от ежедневных прогнозов.")
+
+# === История точности ===
+@sync_to_async
+def get_last_accuracy_records(days=7):
+    return list(
+        ForecastAccuracy.objects
+        .select_related('forecast')  # подгружаем связанный forecast сразу
+        .order_by('-forecast__forecast_date')[:days]
+    )
+
+async def history_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    records = await get_last_accuracy_records()
+    if not records:
+        await update.message.reply_text("📭 Данных о точности пока нет.")
+        return
+
+    text = "📊 История точности прогнозов за последние 7 дней:\n\n"
+    for record in records:
+        # Теперь record.forecast уже загружен, дополнительных запросов не будет
+        text += f"{record.forecast.forecast_date}: {record.accuracy:.2f}%\n"
+
+    await update.message.reply_text(text)
